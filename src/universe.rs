@@ -97,6 +97,14 @@ impl Universe {
         vec
     }
 
+    // Provide values to bound the subsequent step size
+    pub(crate) fn interpolation_step_size_hint(&self, time: f64) -> Option<f64> {
+        let ParticleType::Star(star) = &self.central_body.kind else {
+            unreachable!()
+        };
+        star.stellar_evolution_step_size_hint(time)
+    }
+
     fn disk_is_dissipated(&mut self) {
         self.disk_is_dissipated = self.disk_is_dissipated || (self.time > self.disk_lifetime);
     }

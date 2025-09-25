@@ -43,6 +43,14 @@ impl System<f64> for Universe {
 
         Ok(())
     }
+
+    // Provide an interface for the derivation scheme to bound the step size
+    fn step_size_hint(&self, x: f64) -> (Option<f64>, Option<f64>) {
+        let lower_bound = None;
+        let upper_bound = Universe::interpolation_step_size_hint(self, x);
+
+        (lower_bound, upper_bound)
+    }
 }
 
 #[cfg(test)]

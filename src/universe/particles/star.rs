@@ -198,6 +198,38 @@ impl Star {
         }
     }
 
+    // Determine the interval between the current time and next unused time point of the stellar evolution file.
+    // This is provided back to the integrator as an upper bound on the next time step.
+    // e.g. if the stellar evolution has datapoints for time [1, 2, 3, 4, 5]
+    // and the current time is 2.5, then time points 2 and 3 were used for interpolation at the current step.
+    // therefore the next unused time point would be 4, which bounds the next timestep to 1.5
+    // 4 - 2.5 == 1.5
+    pub(crate) fn stellar_evolution_step_size_hint(&self, x: f64) -> Option<f64> {
+        match self.evolution {
+            Evolution::Disabled => None,
+            Evolution::Mesa {
+                ref interpolator, ..
+            }
+            | Evolution::Starevol {
+                ref interpolator, ..
+            } => {
+                match interpolator
+                    .x_vals()
+                    .binary_search_by(|val| val.total_cmp(&x))
+                {
+                    Ok(i) | Err(i) => {
+                        // Guard against out of bounds panic here.
+                        if i <= interpolator.x_vals().len() - 2 {
+                            Some(interpolator.x_vals()[i + 1] - x)
+                        } else {
+                            None
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub(crate) fn initialise(&mut self, time: f64) -> Result<()> {
         self.stellar_evolution(time)?;
         // 0.02 is the convection zone mass of the Sun divided by its total mass.
