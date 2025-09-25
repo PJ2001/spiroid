@@ -1,4 +1,5 @@
 use super::*;
+use crate::Universe;
 use crate::universe::effects::magnetism::{IsothermalWind, MagneticModel};
 use crate::universe::effects::tides::ConstantTimeLag;
 use crate::universe::effects::tides::TidalModel;
@@ -43,10 +44,17 @@ fn _derivatives_magnetic() {
         time: TEST_TIME,
         disk_lifetime: TEST_DISK_LIFETIME,
         disk_is_dissipated: DISK_IS_DISSIPATED,
+        derivatives: vec![],
     };
     let mut result = y.to_vec();
     universe.update(TEST_TIME, &y).unwrap();
-    let _ = force(&mut result, &mut universe).unwrap();
+    let _ = force(
+        &universe.central_body,
+        &universe.orbiting_body,
+        universe.disk_is_dissipated,
+        &mut result,
+    )
+    .unwrap();
     let expected = vec![
         -6.348994811695528e22,
         1.6351930535408648e22,
@@ -84,10 +92,17 @@ fn _derivatives_tides() {
         time: TEST_TIME,
         disk_lifetime: TEST_DISK_LIFETIME,
         disk_is_dissipated: DISK_IS_DISSIPATED,
+        derivatives: vec![],
     };
     let mut result = y.to_vec();
     universe.update(TEST_TIME, &y).unwrap();
-    let _ = force(&mut result, &mut universe).unwrap();
+    let _ = force(
+        &universe.central_body,
+        &universe.orbiting_body,
+        universe.disk_is_dissipated,
+        &mut result,
+    )
+    .unwrap();
     let expected = vec![
         -6.348994811695528e22,
         6.020027165936562e23,
@@ -129,10 +144,17 @@ fn _derivatives_magnetic_tides() {
         time: TEST_TIME,
         disk_lifetime: TEST_DISK_LIFETIME,
         disk_is_dissipated: DISK_IS_DISSIPATED,
+        derivatives: vec![],
     };
     let mut result = y.to_vec();
     universe.update(TEST_TIME, &y).unwrap();
-    let _ = force(&mut result, &mut universe).unwrap();
+    let _ = force(
+        &universe.central_body,
+        &universe.orbiting_body,
+        universe.disk_is_dissipated,
+        &mut result,
+    )
+    .unwrap();
     let expected = vec![
         -6.348994811695528e22,
         6.486208599049978e23,
@@ -175,10 +197,17 @@ fn _derivatives_kaula() {
         time: TEST_TIME,
         disk_lifetime: TEST_DISK_LIFETIME,
         disk_is_dissipated: DISK_IS_DISSIPATED,
+        derivatives: vec![],
     };
     let mut result = y.to_vec();
     universe.update(TEST_TIME, &y).unwrap();
-    let _ = force(&mut result, &mut universe).unwrap();
+    let _ = force(
+        &universe.central_body,
+        &universe.orbiting_body,
+        universe.disk_is_dissipated,
+        &mut result,
+    )
+    .unwrap();
     let expected = vec![
         0.0,
         0.0,

@@ -1,26 +1,31 @@
 use crate::constants::GRAVITATIONAL;
 use crate::universe::effects::tides::TidalModel;
-use crate::universe::{Kaula, ParticleType, Planet, Star, Universe};
+use crate::universe::{Kaula, Particle, ParticleType, Planet, Star};
 use anyhow::{Result, bail};
 
-pub(crate) fn force(dy: &mut [f64], universe: &mut Universe) -> Result<()> {
+pub(crate) fn force(
+    central_body: &Particle,
+    orbiting_body: &Particle,
+    disk_is_dissipated: bool,
+    dy: &mut [f64],
+) -> Result<()> {
     dy.fill(0.0);
 
-    let ParticleType::Star(star) = &mut universe.central_body.kind else {
+    let ParticleType::Star(star) = &central_body.kind else {
         todo!();
     };
 
-    let ParticleType::Planet(planet) = &mut universe.orbiting_body.kind else {
+    let ParticleType::Planet(planet) = &orbiting_body.kind else {
         todo!();
     };
 
     // Star derivatives
     dy[0] = star_radiative_zone_angular_momentum_derivative(star);
-    dy[1] = star_convective_zone_angular_momentum_derivative(star, universe.disk_is_dissipated);
+    dy[1] = star_convective_zone_angular_momentum_derivative(star, disk_is_dissipated);
 
     // If the planet does not exist, only the star derivatives are computed.
     // i.e. during the disk lifetime, or after the planet is destroyed.
-    if !universe.disk_is_dissipated || planet.is_destroyed() {
+    if !disk_is_dissipated || planet.is_destroyed() {
         return Ok(());
     }
 
@@ -29,7 +34,7 @@ pub(crate) fn force(dy: &mut [f64], universe: &mut Universe) -> Result<()> {
     dy[2] = planet_semi_major_axis_13_div_2_derivative(planet, star);
 
     // Immutable borrow of kaula properties if kaula planet tides enabled.
-    if let TidalModel::KaulaTides { ref kaula } = universe.orbiting_body.tides {
+    if let TidalModel::KaulaTides { ref kaula } = orbiting_body.tides {
         // Sum the semi major axis derivative to account for both CTL star tide (if enabled) and Kaula planet tide.
         dy[2] += kaula_planet_semi_major_axis_13_div_2_derivative(planet, star, kaula);
 

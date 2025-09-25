@@ -23,8 +23,13 @@ impl System<f64> for Universe {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Update the state of the universe based on the current integration values.
         Universe::update(self, time, y)?;
-        // Compute the derivatives using the updated values.
-        force(dy, self)?;
+        // Compute the derivatives using the updated values for the integrator.
+        force(
+            &self.central_body,
+            &self.orbiting_body,
+            self.disk_is_dissipated,
+            dy,
+        )?;
 
         Ok(())
     }
@@ -40,6 +45,13 @@ impl System<f64> for Universe {
         Universe::update(self, time, y)?;
         // Permanently clear destroyed particles.
         Universe::clear_destroyed_particles(self);
+        // Compute the derivatives using the updated values to save for output.
+        force(
+            &self.central_body,
+            &self.orbiting_body,
+            self.disk_is_dissipated,
+            &mut self.derivatives,
+        )?;
 
         Ok(())
     }

@@ -21,7 +21,9 @@ pub struct Universe {
     time: f64,
     disk_lifetime: f64,
     #[serde(default)]
-    disk_is_dissipated: bool,
+    pub disk_is_dissipated: bool,
+    #[serde(default)]
+    pub derivatives: Vec<f64>,
     pub orbiting_body: Particle,
     pub central_body: Particle,
 }
@@ -84,7 +86,7 @@ impl Universe {
     }
 
     // Creates a vector of initial quantities to be integrated, depending on the simulation configuration.
-    pub fn integration_quantities(&self) -> Vec<f64> {
+    pub fn integration_quantities(&mut self) -> Vec<f64> {
         let mut vec = vec![];
 
         vec.append(&mut Self::integration_quantities_per_particle(
@@ -93,6 +95,9 @@ impl Universe {
         vec.append(&mut Self::integration_quantities_per_particle(
             &self.orbiting_body,
         ));
+
+        // Initialise the empty buffer to hold the derivatives for output.
+        self.derivatives = vec![0.; vec.len()];
 
         vec
     }
