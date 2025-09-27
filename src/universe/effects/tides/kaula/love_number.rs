@@ -253,7 +253,7 @@ pub enum ThermalTideModel {
         radiative_frequency: f64, // [omega] Radiative thermal frequency of the atmosphere (s^-1).
     },
     AuclairScaling {
-        surface_pressure: f64, // Surface pressure in bar
+        surface_pressure: f64, // Surface pressure (Pa)
     },
     Leconte {
         thermal_tide_amplitude: f64, // [q_0] Amplitude of the atmospheric quadrupole (Pa)
@@ -383,11 +383,13 @@ impl ThermalTideModel {
             let d2 = 0.023;
             let chi1 = -0.277;
             let chi2 = 0.29;
+            // Convert from Pa to Bar
+            let surface_pressure_bar = surface_pressure / 100_000.;
             // Scaled thermal time scale and amplitude (using scaling formulation with fixed sma a = a_venus) Eq. 44 and 45
             // Scaled pressure Eq. 44
-            let q_0 = 10.0_f64.powf(0.48 * log10!(surface_pressure) + 2.87);
+            let q_0 = 10.0_f64.powf(0.48 * log10!(surface_pressure_bar) + 2.87);
             // Scaled time-scale Eq. 45
-            let tau_0 = 10.0_f64.powf(0.3 * log10!(surface_pressure) + 0.038);
+            let tau_0 = 10.0_f64.powf(0.3 * log10!(surface_pressure_bar) + 0.038);
 
             // Scaled frequency Eq. 46
             let sigma = freq * SECONDS_IN_DAY;
