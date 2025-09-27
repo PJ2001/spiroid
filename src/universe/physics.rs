@@ -34,7 +34,7 @@ pub(crate) fn force(
     dy[2] = planet_semi_major_axis_13_div_2_derivative(planet, star);
 
     // Immutable borrow of kaula properties if kaula planet tides enabled.
-    if let TidalModel::KaulaTides { ref kaula } = orbiting_body.tides {
+    if let TidalModel::KaulaTides(ref kaula) = orbiting_body.tides {
         // Sum the semi major axis derivative to account for both CTL star tide (if enabled) and Kaula planet tide.
         dy[2] += kaula_planet_semi_major_axis_13_div_2_derivative(planet, star, kaula);
 

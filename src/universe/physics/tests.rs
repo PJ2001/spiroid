@@ -182,9 +182,7 @@ fn _derivatives_kaula() {
     let mut universe = Universe {
         orbiting_body: Particle {
             kind: ParticleType::Planet(planet),
-            tides: TidalModel::KaulaTides {
-                kaula: test_kaula(),
-            },
+            tides: TidalModel::KaulaTides(test_kaula()),
             magnetism: MagneticModel::Disabled,
             wind: WindModel::Disabled,
         },
