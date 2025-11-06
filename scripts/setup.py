@@ -198,7 +198,7 @@ def integrator_setup():
 
     dopri853 = {
         "Dopri853": {
-            "step_size_controller": {
+            "step_controller": {
                 "relative_tolerance": 1e-10,
                 "absolute_tolerance": 1e-10,
                 "step_size_factor_min": 0.3333333333333333,
