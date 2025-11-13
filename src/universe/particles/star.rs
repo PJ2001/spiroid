@@ -18,12 +18,12 @@ enum Evolution {
     Starevol {
         star_file_path: PathBuf,
         #[serde(skip)]
-        interpolator: Interpolator<Vec<f64>>,
+        interpolator: Interpolator<StarCsv>,
     },
     Mesa {
         star_file_path: PathBuf,
         #[serde(skip)]
-        interpolator: Interpolator<Vec<f64>>,
+        interpolator: Interpolator<StarCsv>,
     },
 }
 
@@ -143,7 +143,7 @@ impl Star {
     }
 
     // Initialise stellar values from the stellar evolution file if evolution is interpolated.
-    pub fn initialise_evolution(&mut self, star_ages: &[f64], star_values: &[Vec<f64>]) {
+    pub fn initialise_evolution(&mut self, star_ages: &[f64], star_values: &[StarCsv]) {
         match self.evolution {
             Evolution::Disabled => {}
             Evolution::Starevol {
@@ -182,22 +182,23 @@ impl Star {
             | Evolution::Starevol {
                 ref interpolator, ..
             } => {
-                let (age, values) = interpolator.interpolate(time)?;
-                // Update the star properties with the interpolated values.
+                let (age, new) = interpolator.interpolate(time)?;
+                // Update the star properties with the new values from the interpolation.
                 self.age = age;
-                self.radius = values[1];
-                self.mass = values[2];
-                self.convective_radius = values[3];
-                self.radiative_mass = values[4];
-                self.radiative_moment_of_inertia = values[5];
-                self.convective_moment_of_inertia = values[6];
-                self.luminosity = values[7];
-                self.radiative_mass_derivative = values[8];
-                self.convective_moment_of_inertia_derivative = values[9];
+                self.radius = new.radius;
+                self.mass = new.mass;
+                self.convective_radius = new.convective_radius;
+                self.radiative_mass = new.radiative_mass;
+                self.radiative_moment_of_inertia = new.radiative_moment_of_inertia;
+                self.convective_moment_of_inertia = new.convective_moment_of_inertia;
+                self.luminosity = new.luminosity;
+                self.radiative_mass_derivative = new.radiative_mass_derivative;
+                self.convective_moment_of_inertia_derivative =
+                    new.convective_moment_of_inertia_derivative;
 
                 if matches!(self.evolution, Evolution::Mesa { .. }) {
-                    self.convective_turnover_time = values[10];
-                    self.evolved_mass_loss_rate = values[11];
+                    self.convective_turnover_time = new.convective_turnover_time;
+                    self.evolved_mass_loss_rate = new.mass_loss_rate;
                 }
 
                 self.dynamical_tide_dissipation = self.dynamical_tide_dissipation();

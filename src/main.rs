@@ -17,8 +17,9 @@ fn main() -> Result<()> {
                     // Maps every row of the csv file into a `StarCsv`.
                     let mut stellar_data = read_csv_rows_from_file::<StarCsv>(star_file)?;
                     // Configure the stellar evolution interpolator.
-                    let (star_ages, star_values) = StarCsv::initialise(&mut stellar_data);
-                    star.initialise_evolution(&star_ages, &star_values);
+                    StarCsv::initialise(&mut stellar_data);
+                    let star_ages = StarCsv::ages(&stellar_data);
+                    star.initialise_evolution(&star_ages, &stellar_data);
                 }
             }
 

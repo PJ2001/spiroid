@@ -1,46 +1,45 @@
 use crate::constants::{SECONDS_IN_YEAR, SOLAR_LUMINOSITY, SOLAR_MASS, SOLAR_RADIUS};
+use derive_more::{Add, Mul};
 use serde::{Deserialize, Serialize};
 
 // Interpolation values deserialized from user provided CSV.
 // Source of data is typically from STAREVOL or MESA stellar models.
-#[derive(Serialize, Deserialize, PartialEq, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default, Clone, Copy, Add, Mul)]
 pub struct StarCsv {
-    age: f64,                          // (s)
-    radius: f64,                       // (m)
-    mass: f64,                         // (kg)
-    convective_radius: f64,            // (m)
-    radiative_mass: f64,               // (kg)
-    radiative_moment_of_inertia: f64,  // (kg.m2)
-    convective_moment_of_inertia: f64, // (kg.m2)
-    luminosity: f64,                   // (J.s-1)
+    pub(crate) age: f64,                          // (s)
+    pub(crate) radius: f64,                       // (m)
+    pub(crate) mass: f64,                         // (kg)
+    pub(crate) convective_radius: f64,            // (m)
+    pub(crate) radiative_mass: f64,               // (kg)
+    pub(crate) radiative_moment_of_inertia: f64,  // (kg.m2)
+    pub(crate) convective_moment_of_inertia: f64, // (kg.m2)
+    pub(crate) luminosity: f64,                   // (J.s-1)
 
     // Only provided by MESA data files.
     #[serde(default)]
-    convective_turnover_time: f64, // (s)
+    pub(crate) convective_turnover_time: f64, // (s)
     #[serde(default)]
-    mass_loss_rate: f64, // (kg.s-1)
+    pub(crate) mass_loss_rate: f64, // (kg.s-1)
 
     // Calculated internally, not included in the CSV.
     #[serde(skip)]
-    convective_moment_of_inertia_derivative: f64,
+    pub(crate) convective_moment_of_inertia_derivative: f64,
     #[serde(skip)]
-    radiative_mass_derivative: f64,
+    pub(crate) radiative_mass_derivative: f64,
 }
 
 impl StarCsv {
-    pub fn initialise(stars: &mut [Self]) -> (Vec<f64>, Vec<Vec<f64>>) {
+    pub fn initialise(stars: &mut [Self]) {
         stars.iter_mut().for_each(Self::convert_units);
         Self::compute_derivatives(stars);
+    }
 
-        // Split the values into a vector of ages and a nested vector of remaining values.
-        // The ages are used as the index to interpolate remaining values, based on time.
-        let ages = stars
+    // Return the ages, which are used as the index to interpolate remaining stellar values, based on time.
+    pub fn ages(stars: &[Self]) -> Vec<f64> {
+        stars
             .iter()
             .map(|starcsv| starcsv.age)
-            .collect::<Vec<f64>>();
-        let rest = stars.iter().map(StarCsv::to_vec).collect::<Vec<Vec<f64>>>();
-
-        (ages, rest)
+            .collect::<Vec<f64>>()
     }
 
     // Initialise the input values with unit conversion.
@@ -77,22 +76,5 @@ impl StarCsv {
                 - prev.convective_moment_of_inertia)
                 / (next.age - prev.age);
         }
-    }
-
-    fn to_vec(&self) -> Vec<f64> {
-        vec![
-            self.age,
-            self.radius,
-            self.mass,
-            self.convective_radius,
-            self.radiative_mass,
-            self.radiative_moment_of_inertia,
-            self.convective_moment_of_inertia,
-            self.luminosity,
-            self.radiative_mass_derivative,
-            self.convective_moment_of_inertia_derivative,
-            self.convective_turnover_time,
-            self.mass_loss_rate,
-        ]
     }
 }

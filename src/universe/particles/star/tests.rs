@@ -19,8 +19,9 @@ fn add_interpolate_to_test_star(star: &mut Star) {
     if let Some(star_file_path) = star.evolution_file() {
         let mut stellar_data = read_csv_rows_from_file::<StarCsv>(star_file_path).unwrap();
         // Configure the stellar evolution interpolator.
-        let (star_ages, star_values) = StarCsv::initialise(&mut stellar_data);
-        star.initialise_evolution(&star_ages, &star_values);
+        StarCsv::initialise(&mut stellar_data);
+        let star_ages = StarCsv::ages(&stellar_data);
+        star.initialise_evolution(&star_ages, &stellar_data);
     }
 }
 
