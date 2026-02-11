@@ -70,8 +70,8 @@ def parse_jsonl(data):
     """Reads a JSONL file and combines all entries into a single dictionary."""
     dict = {}
 
-    # Replace booleans with 0/1 so they can be plotted.
-    lookup = {False: 0, True: 1}
+    # Replace booleans with 0/1 so they can be plotted and null with NaN.
+    lookup = {False: 0, True: 1, None: float("nan")}
 
     for line_number, line in enumerate(data):
         # Allow plotting of ongoing simulations that may have a truncated final line.
@@ -155,11 +155,14 @@ def create_plot(title, x_label, y_label, subplots, logscale=False):
 def save_plot(title, output_path):
     """Saves the plot to png."""
     # Save the figure as a file.
-    plt.savefig(
-        f"{output_path}/{title.lower().replace(' ', '_').replace('\n', ':')}.png",
-        dpi=500,
-        bbox_inches="tight",
-    )
+    try:
+        plt.savefig(
+            f"{output_path}/{title.lower().replace(' ', '_').replace('\n', ':')}.png",
+            dpi=500,
+            bbox_inches="tight",
+        )
+    except ValueError as value_error:
+        print(f"FAILED: {value_error}")
 
 
 def create_plots(x_label, y_label, subplots, output_path):

@@ -23,7 +23,16 @@ import sys
 
 sys.dont_write_bytecode = True
 from spiroid.configmaker import make_configs
-from units import AU, SECONDS_IN_YEAR, SOLAR_MASS
+from units import (
+    AU,
+    SECONDS_IN_YEAR,
+    SOLAR_MASS,
+    SOLAR_RADIUS,
+    JUPITER_MASS,
+    JUPITER_RADIUS,
+    EARTH_MASS,
+    EARTH_RADIUS,
+)
 
 
 def simulator_setup():
@@ -119,6 +128,7 @@ def star_setup(effects):
     ##############################################################
     star_base = {
         "mass": [None],  # Do not edit.
+        "radius": [None],  # Do not edit.
         # rad.s-1
         "spin": [5.194e-05],
         # seconds (from years)
@@ -144,7 +154,8 @@ def star_setup(effects):
 
         # kg (from Msun)
         star_base["mass"] = [SOLAR_MASS * x for x in [0.8]]
-
+        # m (from SOLAR_RADIUS)
+        star_base["radius"] = [SOLAR_RADIUS * x for x in [1.0]]
         # No units
         star_base["radiative_moment_of_inertia"] = [1.0]
         star_base["convective_moment_of_inertia"] = [1.0]

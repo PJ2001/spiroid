@@ -1,19 +1,27 @@
 AU = 149597870700.0
 SECONDS_IN_YEAR = 31557600.0
 SOLAR_MASS = 1.9884158605722266e30
-
+SOLAR_RADIUS = 6.957e8
+SOLAR_MASS_OVER_JUPITER_MASS = 1.047_348_644e3
+JUPITER_MASS = SOLAR_MASS / SOLAR_MASS_OVER_JUPITER_MASS
+GRAVITATIONAL = 6.674_28e-11
+GRAVITATIONAL_EARTH_MASS = 3.986_004_415e14
+EARTH_MASS = GRAVITATIONAL_EARTH_MASS / GRAVITATIONAL
+EARTH_RADIUS = 6.378_136_6e6
+JUPITER_RADIUS = 7.1492e7
 # Plots will _not_ be made for these quantities.
 # Uncomment a quantity to prevent it being used in plots.
 IGNORED_KEYS = [
     "time",
-    "planet_tides_kaulatides_kaula_particle_type_solid_solid_file",
     # "disk_is_dissipated",
     # "disk_lifetime",
     # "planet_density_ratio",
     # "planet_eccentricity",
     # "planet_inclination",
     # "planet_is_destroyed",
+    "planet_tides_kaulatides_particle_type_solid_solid_file",
     # "planet_longitude_ascending_node",
+    # "planet_luminosity",
     # "planet_magnetic_field",
     # "planet_magnetic_pressure",
     # "planet_magnetism",
@@ -24,10 +32,12 @@ IGNORED_KEYS = [
     # "planet_pericentre_omega",
     # "planet_radius",
     # "planet_radius_of_gyration_2",
+    # "planet_reduced_mass",
     # "planet_roche_limit",
     # "planet_semi_major_axis",
     # "planet_spin",
     # "planet_spin_inclination",
+    # "planet_wind",
     # "star_age",
     # "star_alfven_radius",
     # "star_angular_momentum_redistribution",
@@ -40,8 +50,11 @@ IGNORED_KEYS = [
     # "star_convective_zone_angular_momentum",
     # "star_core_envelope_coupling_constant",
     # "star_dynamical_tide_dissipation",
-    # "star_evolution_interpolated_star_file_path",
-    # "star_footpoint_conductance",
+    # "star_evolution",
+    # "star_evolved_change_semi_major_axis",
+    # "star_evolved_mass_loss_rate",
+    # "star_evolved_wind_torque",
+    "star_evolution_interpolated_star_file_path",
     # "star_luminosity",
     # "star_magnetic_field",
     # "star_magnetic_torque",
@@ -50,7 +63,9 @@ IGNORED_KEYS = [
     # "star_magnetism_wind_azimuthal_velocity",
     # "star_magnetism_wind_critical_radius",
     # "star_magnetism_wind_critical_radius_div_alfven_radius",
+    # "star_magnetism_wind_footpoint_conductance",
     # "star_magnetism_wind_integration_constant",
+    # "star_magnetism_wind_interaction",
     # "star_magnetism_wind_magnetic_pressure",
     # "star_magnetism_wind_magnetic_torque",
     # "star_magnetism_wind_radial_magnetic_field",
@@ -59,8 +74,10 @@ IGNORED_KEYS = [
     # "star_magnetism_wind_wind_density",
     # "star_magnetism_wind_wind_velocity",
     # "star_mass",
+    # "star_mass_accretion_efficiency",
     # "star_mass_loss_rate",
     # "star_mass_transfer_envelope_to_core_torque",
+    # "star_radiative_mass",
     # "star_radiative_mass_derivative",
     # "star_radiative_moment_of_inertia",
     # "star_radiative_zone_angular_momentum",
@@ -69,8 +86,12 @@ IGNORED_KEYS = [
     # "star_spin",
     # "star_tidal_frequency",
     # "star_tidal_quality",
+    # "star_tidal_torque_convective",
     # "star_tidal_torque",
+    # "star_tides",
     # "star_tides_constanttimelag",
+    # "star_wind",
+    # "star_wind_orbital_angular_momentum_loss",
     # "star_wind_torque",
 ]
 
@@ -80,6 +101,7 @@ def filter_keys(keys):
     for key in IGNORED_KEYS:
         if key in keys:
             keys.remove(key)
+
     return keys
 
 
@@ -134,6 +156,14 @@ KEY_PREFIXES = {
     "orbiting_body": "Planet",
     "central_body_kind_": "",
     "central_body": "Star",
+    "derivatives_0": "star_radiative_zone_dt",
+    "derivatives_1": "star_convective_zone_dt",
+    "derivatives_2": "planet_spin_dt",
+    "derivatives_3": "planet_orbital_eccentricity_dt",
+    "derivatives_4": "planet_orbital_inclination_dt",
+    "derivatives_5": "planet_longitude_ascending_node_dt",
+    "derivatives_6": "planet_argument_of_periapsis_dt",
+    "derivatives_8": "planet_spin_axis_inclination_dt",
 }
 
 

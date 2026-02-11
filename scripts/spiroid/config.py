@@ -80,12 +80,13 @@ def make_stars(star_base, effects):
     for star_vals in combis:
         (
             mass,
+            radius,
             spin,
             core_envelope_coupling_constant,
             footpoint_conductance,
             evolution,
             sigma_bar,
-        ) = star_vals[:6]
+        ) = star_vals[:7]
 
         body = {}
         star = {
@@ -108,8 +109,9 @@ def make_stars(star_base, effects):
             star["evolution"] = evolution
         else:
             star["mass"] = mass
-            star["radiative_moment_of_inertia"] = star_vals[6]
-            star["convective_moment_of_inertia"] = star_vals[7]
+            star["radius"] = radius
+            star["radiative_moment_of_inertia"] = star_vals[7]
+            star["convective_moment_of_inertia"] = star_vals[8]
 
         if not effects["WIND_ENABLED"]:
             body["wind"] = "Disabled"
