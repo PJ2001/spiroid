@@ -5,6 +5,7 @@ use crate::universe::particles::star::tests::test_star;
 use crate::universe::tests::TEST_TIME;
 use num_complex::c64;
 use pretty_assertions::assert_eq;
+use sci_file::Interpolator1D;
 
 #[cfg(test)]
 pub fn test_love_number() -> LoveNumber {
@@ -73,7 +74,7 @@ pub fn test_love_number() -> LoveNumber {
     love_number
 }
 
-pub fn test_k2_interpolator() -> Interpolator1D<Complex<f64>> {
+pub fn test_k2_interpolator() -> DataStore<Complex<f64>> {
     let mut interpolator = Interpolator1D::<Complex<f64>>::new();
     interpolator
         .init(
@@ -94,7 +95,7 @@ pub fn test_k2_interpolator() -> Interpolator1D<Complex<f64>> {
         )
         .unwrap();
 
-    interpolator
+    DataStore::Interpolate1D(interpolator)
 }
 
 #[test]
@@ -110,7 +111,14 @@ fn _solid() {
 
     let expected = love_number.clone();
     let mpq = test_mpq();
-    let _ = love_number.refresh_cache(TEST_TIME, &planet, &star, &particle_type, mpq);
+    let _ = love_number.refresh_cache(
+        TEST_TIME,
+        &planet,
+        &star,
+        &particle_type,
+        &ThermalTideAtmosphereModel::Disabled,
+        mpq,
+    );
 
     assert_eq!(expected, love_number);
 }

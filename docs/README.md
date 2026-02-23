@@ -206,13 +206,33 @@ Set the `tides` property of the `central_body` particle to `ConstantTimeLag`. Th
     * `FrequencyAveraged` Follows the frequency-averaged formalism described in [Mathis 2015](https://doi.org/10.1051/0004-6361/201526472)
 
 #### Kaula tides (planet)
-Set the `tides` property of the `orbiting_body` particle to `KaulaTides`, specify the `particle_type` (e.g. `Solid`) and provide the appropriate love number data file.
-(e.g. `examples/data/planet/tides/kaula/leconte2015_steinberger.csv`).
-The format of the file must be CSV (Comma Separated Values) with the following header and fields:
+Set the `tides` property of the `orbiting_body` particle to `KaulaTides`, specify the `particle_type` (e.g. `Solid`) and provide the appropriate love number data files.
+Interpolation is supported in 1D by tidal frequency and 2D by time and tidal frequency.
+(e.g. `examples/data/planet/tides/kaula/leconte2015_steinberger.json`).
+The format of the file must be JSON with the following fields:
 
-- `tidal_frequency`
-- `real_love_number`
-- `imaginary_love_number`
+'''json
+ "Interpolate1D": {
+        "x_vals": [1., 2., 3.],
+        "data": [[0., 0.], [1., 0.], [0., 1.]]
+'''
+where:
+- `x_vals` are a list of tidal frequencies (f64)
+- `data` is a list of k2_love_numbers (Complex<f64>: [real, imag])
+
+For convenience, the structure of the 2d interpolator data file uses `x` as `time`(years) and `y` as the tidal frequency: 
+'''json
+ "Interpolate2D": {
+        "x_vals": [],
+        "y_vals": [],
+        "data": [[], [], []]
+'''
+where:
+- `x_vals` are a list of times in years (f64)
+- `y_vals` are a list of tidal frequencies (f64)
+- `data` is a list of k2_love_numbers (Complex<f64>: [real, imag])
+
+The interpolator is transposed during initialisation so that `x_vals` are tidal frequencies in both 1D and 2D interpolators.
 
 ## Testing
 Run the built in tests:

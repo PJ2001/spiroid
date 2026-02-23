@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rayon::prelude::*;
-use sci_file::{read_csv_columns_from_file, read_csv_rows_from_dir, read_csv_rows_from_file};
-use spiroid_lib::{ParticleType, Simulation, StarCsv, Universe};
+use sci_file::{DataStore, read_csv_rows_from_file, read_json_from_file};
+use spiroid_lib::{ParticleType, SECONDS_IN_YEAR, Simulation, StarCsv, Universe};
 
 fn main() -> Result<()> {
     // Parse the command line arguments into one (or more) simulations.
@@ -11,9 +11,6 @@ fn main() -> Result<()> {
     simulations
         .into_par_iter()
         .map(|mut simulation| {
-            let initial_time = simulation.initial_time;
-            let final_time = simulation.final_time;
-
             if let ParticleType::Star(star) = &mut simulation.system.central_body.kind {
                 // Load stellar evolution data from file if stellar evolution is enabled.
                 if let Some(star_file) = star.evolution_file() {
@@ -30,30 +27,43 @@ fn main() -> Result<()> {
             if let Some(kaula) = simulation.system.orbiting_body.tides.kaula_get_mut() {
                 if kaula.interpolation_mode() {
                     // Solid planet
-                    if let Some(solid_file) = kaula.solid_file() {
-                        // Maps each column of love number data into a vector.
-                        let solid_k2_spectrum = read_csv_columns_from_file::<f64>(solid_file)?;
-                        kaula.initialise_love_number_solid(&solid_k2_spectrum)?;
+                    if let Some((solid_file, solid_k2)) = kaula.solid_file() {
+                        *solid_k2 = read_json_from_file(solid_file)?;
+                        if let DataStore::Interpolate2D(interpolator_2d) = solid_k2 {
+                            // Transpose the interpolator from (x:years, y:tidal_frequency) to (x:tidal_frequency, y:years)
+                            interpolator_2d.transpose();
+                            // Convert the time dimension of the 2D interpolation from years to seconds.
+                            interpolator_2d
+                                .y_vals_mut()
+                                .iter_mut()
+                                .for_each(|year| *year *= SECONDS_IN_YEAR);
+                        }
+                        solid_k2.dimension_check()?;
                     }
-                    if let Some(ocean_file) = kaula.ocean_file() {
-                        let ocean_k2_spectrum = read_csv_columns_from_file::<f64>(ocean_file)?;
-                        kaula.initialise_love_number_ocean(&ocean_k2_spectrum)?;
-                    }
-                    if let Some(interpolate_dir) = kaula.interpolate_dir() {
-                        let _interpolation_2d_k2_spectrum =
-                            read_csv_rows_from_dir::<f64>(interpolate_dir)?;
-                        todo!();
+                    // Liquid planet
+                    if let Some((liquid_file, liquid_k2)) = kaula.liquid_file() {
+                        *liquid_k2 = read_json_from_file(liquid_file)?;
+                        if let DataStore::Interpolate2D(interpolator_2d) = liquid_k2 {
+                            // Transpose the interpolator from (x:years, y:tidal_frequency) to (x:tidal_frequency, y:years)
+                            interpolator_2d.transpose();
+                            // Convert the time dimension of the 2D interpolation from years to seconds.
+                            interpolator_2d
+                                .y_vals_mut()
+                                .iter_mut()
+                                .for_each(|year| *year *= SECONDS_IN_YEAR);
+                        }
+                        liquid_k2.dimension_check()?;
                     }
                 }
                 if let ParticleType::Star(star) = &simulation.system.central_body.kind
                     && let ParticleType::Planet(planet) = &simulation.system.orbiting_body.kind
                 {
-                    kaula.initialise_cache(initial_time, star, planet)?;
+                    kaula.initialise_cache(simulation.initial_time, star, planet)?;
                 }
             }
 
             // Initialise the universe (star, planet, etc).
-            simulation.system.initialise(initial_time)?;
+            simulation.system.initialise(simulation.initial_time)?;
 
             // Initialise the values to integrate.
             let y = simulation.system.integration_quantities();
@@ -69,7 +79,7 @@ fn main() -> Result<()> {
             // y[7] = Planet argument of periapsis
             // y[8] = Planet spin axis inclination (with respect to the total angular momentum)
 
-            simulation.launch(initial_time, final_time, &y)?;
+            simulation.launch(simulation.initial_time, simulation.final_time, &y)?;
             Ok(())
         })
         .collect::<Result<()>>()?;

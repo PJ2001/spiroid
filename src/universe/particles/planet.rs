@@ -4,6 +4,13 @@ use crate::universe::particles::{ParticleT, magnetic_pressure};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
+pub enum Atmosphere {
+    #[default]
+    Disabled,
+    Enabled,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
 #[serde(deny_unknown_fields)]
 #[serde(default)]
 pub struct Planet {
@@ -22,6 +29,8 @@ pub struct Planet {
     pub(crate) spin_inclination: f64,         // rad
     pub(crate) radius_of_gyration_2: f64,     // ()
     pub(crate) luminosity: f64,               // W
+
+    pub(crate) atmosphere: Atmosphere,
 
     // Calculated internally
     pub(crate) magnetic_pressure: f64,

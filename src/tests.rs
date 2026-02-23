@@ -1,18 +1,16 @@
 use super::*;
 use postcard;
 use pretty_assertions::assert_eq;
-use sci_file::{
-    OutputWriter, read_csv_columns_from_file, read_csv_rows_from_file, read_json_from_file,
-};
+use sci_file::{DataStore, OutputWriter, read_csv_rows_from_file, read_json_from_file};
 use simulation::Integrator;
 use simulation::simulation::InputConfig;
 use std::path::Path;
 
-fn test_simulation(config: impl AsRef<Path>) -> Universe {
+fn test_simulation(simulation: impl AsRef<Path>) -> Universe {
     // Parse the config file.
-    let mut config: InputConfig<Universe> = read_json_from_file(&config).unwrap();
+    let mut simulation: InputConfig<Universe> = read_json_from_file(&simulation).unwrap();
     // Load stellar evolution data from file.
-    if let ParticleType::Star(star) = &mut config.system.central_body.kind {
+    if let ParticleType::Star(star) = &mut simulation.system.central_body.kind {
         // Load stellar evolution data from file if stellar evolution is enabled.
         if let Some(star_file) = star.evolution_file() {
             // Maps every row of the csv file into a `StarCsv`.
@@ -26,44 +24,63 @@ fn test_simulation(config: impl AsRef<Path>) -> Universe {
     }
 
     // Load love number data from file(s) if kaula tides are enabled.
-    if let Some(kaula) = config.system.orbiting_body.tides.kaula_get_mut() {
+    if let Some(kaula) = simulation.system.orbiting_body.tides.kaula_get_mut() {
         if kaula.interpolation_mode() {
-            if let Some(solid_file) = kaula.solid_file() {
-                // Maps each column of love number data into a vector.
-                let solid_k2_spectrum = read_csv_columns_from_file::<f64>(solid_file).unwrap();
-                kaula
-                    .initialise_love_number_solid(&solid_k2_spectrum)
-                    .unwrap();
+            // Solid planet
+            if let Some((solid_file, solid_k2)) = kaula.solid_file() {
+                *solid_k2 = read_json_from_file(solid_file).unwrap();
+                if let DataStore::Interpolate2D(interpolator_2d) = solid_k2 {
+                    // Transpose the interpolator from (x:years, y:tidal_frequency) to (x:tidal_frequency, y:years)
+                    interpolator_2d.transpose();
+                    // Convert the time dimension of the 2D interpolation from years to seconds.
+                    interpolator_2d
+                        .y_vals_mut()
+                        .iter_mut()
+                        .for_each(|year| *year *= SECONDS_IN_YEAR);
+                }
+                solid_k2.dimension_check().unwrap();
             }
-            if let Some(ocean_file) = kaula.ocean_file() {
-                let ocean_k2_spectrum = read_csv_columns_from_file::<f64>(ocean_file).unwrap();
-                kaula
-                    .initialise_love_number_ocean(&ocean_k2_spectrum)
-                    .unwrap();
+            // Liquid planet
+            if let Some((liquid_file, liquid_k2)) = kaula.liquid_file() {
+                *liquid_k2 = read_json_from_file(liquid_file).unwrap();
+                if let DataStore::Interpolate2D(interpolator_2d) = liquid_k2 {
+                    // Convert the time dimension of the 2D interpolation from years to seconds.
+                    interpolator_2d
+                        .y_vals_mut()
+                        .iter_mut()
+                        .for_each(|year| *year *= SECONDS_IN_YEAR);
+                }
+                liquid_k2.dimension_check().unwrap();
             }
         }
-        if let ParticleType::Star(star) = &config.system.central_body.kind
-            && let ParticleType::Planet(planet) = &config.system.orbiting_body.kind
+        if let ParticleType::Star(star) = &simulation.system.central_body.kind
+            && let ParticleType::Planet(planet) = &simulation.system.orbiting_body.kind
         {
             kaula
-                .initialise_cache(config.initial_time, star, planet)
+                .initialise_cache(simulation.initial_time, star, planet)
                 .unwrap();
         }
     }
 
     // Initialise the universe (star, planet, etc).
-    config.system.initialise(config.initial_time).unwrap();
+    simulation
+        .system
+        .initialise(simulation.initial_time)
+        .unwrap();
 
     // Initial values for the integrator.
-    let y = config.system.integration_quantities();
-    config
+    let y = simulation.system.integration_quantities();
+    simulation
         .integrator
-        .initialise(config.initial_time, config.final_time, &y);
+        .initialise(simulation.initial_time, simulation.final_time, &y);
 
     // Run the full integration.
-    let _ = config.integrator.integrate(&mut config.system).unwrap();
+    let _ = simulation
+        .integrator
+        .integrate(&mut simulation.system)
+        .unwrap();
 
-    config.system
+    simulation.system
 }
 
 fn compare_or_create(path: impl AsRef<Path> + std::fmt::Display, result: &Universe) {
@@ -172,8 +189,15 @@ fn example_magnetic_tides() {
 }
 
 #[test]
-fn example_planet_kaula_solid_tides() {
-    let (config, expected) = make_testcase_paths("planet_kaula_solid_tides");
+fn example_planet_kaula_solid_tides_1d_interpolation() {
+    let (config, expected) = make_testcase_paths("planet_kaula_solid_tides_1d_interpolation");
+    let result = test_simulation(&config);
+    compare_or_create(&expected, &result);
+}
+
+#[test]
+fn example_planet_kaula_solid_tides_2d_interpolation() {
+    let (config, expected) = make_testcase_paths("planet_kaula_solid_tides_2d_interpolation");
     let result = test_simulation(&config);
     compare_or_create(&expected, &result);
 }

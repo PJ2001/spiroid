@@ -1,11 +1,12 @@
-use anyhow::{Error, Result};
-use num_complex::{Complex, c64};
+use anyhow::Result;
+use num_complex::Complex;
+use sci_file::DataStore;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 mod love_number;
 mod polynomials;
 
-use love_number::{LoveNumber, ParticleComposition};
+use love_number::{LoveNumber, ParticleComposition, ThermalTideAtmosphereModel};
 use polynomials::Polynomials;
 
 use crate::universe::particles::{ParticleT, Planet};
@@ -46,6 +47,7 @@ struct Summation {
 #[serde(deny_unknown_fields)]
 pub struct Kaula {
     pub(crate) particle_type: ParticleComposition,
+    pub(crate) atmosphere_model: ThermalTideAtmosphereModel,
     // Inclination and eccentricty polynomials
     #[serde(skip)]
     polynomials: Polynomials,
@@ -70,88 +72,29 @@ pub struct Kaula {
 
 impl Kaula {
     pub fn interpolation_mode(&self) -> bool {
-        match self.particle_type {
-            ParticleComposition::None => false,
-            _ => true,
-        }
+        !matches!(self.particle_type, ParticleComposition::None)
     }
 
-    pub fn solid_file(&self) -> Option<&PathBuf> {
-        match self.particle_type {
-            ParticleComposition::Solid { ref solid_file, .. }
-            | ParticleComposition::SolidAtmosphere { ref solid_file, .. }
-            | ParticleComposition::SolidOcean { ref solid_file, .. }
-            | ParticleComposition::SolidAtmosphereOcean { ref solid_file, .. } => Some(solid_file),
-            _ => None,
-        }
-    }
-
-    pub fn ocean_file(&self) -> Option<&PathBuf> {
-        match self.particle_type {
-            ParticleComposition::SolidOcean { ref ocean_file, .. }
-            | ParticleComposition::SolidAtmosphereOcean { ref ocean_file, .. } => Some(ocean_file),
-            _ => None,
-        }
-    }
-
-    pub fn interpolate_dir(&self) -> Option<&PathBuf> {
-        match self.particle_type {
-            ParticleComposition::TemporalSolid {
-                ref solid_files_dir,
-                ..
-            }
-            | ParticleComposition::TemporalSolidAtmosphere {
-                ref solid_files_dir,
-                ..
-            } => Some(solid_files_dir),
-            _ => None,
-        }
-    }
-
-    pub fn initialise_love_number_solid(&mut self, love_solid: &[Vec<f64>]) -> Result<(), Error> {
+    pub fn solid_file(&mut self) -> Option<(&PathBuf, &mut DataStore<Complex<f64>>)> {
         match self.particle_type {
             ParticleComposition::Solid {
-                ref mut solid_k2, ..
-            }
-            | ParticleComposition::SolidAtmosphere {
-                ref mut solid_k2, ..
-            }
-            | ParticleComposition::SolidAtmosphereOcean {
-                ref mut solid_k2, ..
-            } => {
-                // Combine the parts into Complex number type
-                let love_numbers = love_solid[1]
-                    .iter()
-                    .zip(love_solid[2].iter())
-                    .map(|(re, im)| c64(*re, *im))
-                    .collect::<Vec<Complex<f64>>>();
-                solid_k2.init(&love_solid[0], &love_numbers)?;
-            }
-            _ => unreachable!(),
+                ref solid_file,
+                ref mut solid_k2,
+                ..
+            } => Some((solid_file, solid_k2)),
+            _ => None,
         }
-        Ok(())
     }
 
-    pub fn initialise_love_number_ocean(&mut self, love_ocean: &[Vec<f64>]) -> Result<(), Error> {
+    pub fn liquid_file(&mut self) -> Option<(&PathBuf, &mut DataStore<Complex<f64>>)> {
         match self.particle_type {
-            ParticleComposition::SolidOcean {
-                ref mut ocean_k2, ..
-            }
-            | ParticleComposition::SolidAtmosphereOcean {
-                ref mut ocean_k2, ..
-            } => {
-                // Combine the parts into Complex number type
-                let love_numbers = love_ocean[0]
-                    .iter()
-                    .zip(love_ocean[1].iter())
-                    .map(|(re, im)| c64(*re, *im))
-                    .collect::<Vec<Complex<f64>>>();
-
-                ocean_k2.init(&love_ocean[0], &love_numbers)?;
-            }
-            _ => unreachable!(),
+            ParticleComposition::Liquid {
+                ref liquid_file,
+                ref mut liquid_k2,
+                ..
+            } => Some((liquid_file, liquid_k2)),
+            _ => None,
         }
-        Ok(())
     }
 
     pub fn initialise_cache(
@@ -239,8 +182,14 @@ impl Kaula {
     ) -> Result<()> {
         // Only recalculate if any of the values used in the computation of k2 changed.
         if self.love_number_recalculation_needed(planet) {
-            self.love_number
-                .refresh_cache(time, planet, star, &self.particle_type, mpq)?;
+            self.love_number.refresh_cache(
+                time,
+                planet,
+                star,
+                &self.particle_type,
+                &self.atmosphere_model,
+                mpq,
+            )?;
         }
 
         // Only recalculate if inclination or eccentricity changed.

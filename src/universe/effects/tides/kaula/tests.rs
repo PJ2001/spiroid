@@ -15,6 +15,7 @@ pub fn test_kaula() -> Kaula {
             solid_file: "dummy".into(),
             solid_k2: test_k2_interpolator(),
         },
+        atmosphere_model: ThermalTideAtmosphereModel::Disabled,
         polynomials: test_polynomials(),
         love_number: test_love_number(),
         summation: Summation::default(),
