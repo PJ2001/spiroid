@@ -69,11 +69,10 @@ def make_planets(planet_base, effects):
             }
 
         elif effects["PERTURBER_ENABLED"]:
-            (eccentricity, longitude_ascending_node, pericentre_omega) = planet_vals[4:]
+            (eccentricity, pericentre_omega) = planet_vals[4:]
             planet.update(
                 {
                     "eccentricity": eccentricity,
-                    "longitude_ascending_node": longitude_ascending_node,
                     "pericentre_omega": pericentre_omega,
                 }
             )
@@ -142,12 +141,11 @@ def make_perturbers(perturber_base):
     perturbers = []
     combis = list(itertools.product(*perturber_base.values()))
     for vals in combis:
-        mass, semi_major_axis, eccentricity, longitude_ascending_node, pericentre_omega = vals
+        mass, semi_major_axis, eccentricity, pericentre_omega = vals
         planet = {
             "mass": mass,
             "semi_major_axis": semi_major_axis,
             "eccentricity": eccentricity,
-            "longitude_ascending_node": longitude_ascending_node,
             "pericentre_omega": pericentre_omega,
         }
         perturbers.append({"kind": {"Planet": planet}, "wind": "Disabled"})

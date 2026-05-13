@@ -194,9 +194,10 @@ impl Planet {
     }
 
     // Refresh orbital elements for the 2D secular (companion) case.
-    pub(crate) fn refresh_companion_elements(&mut self, eccentricity: f64, pericentre_omega: f64) {
+    pub(crate) fn refresh_companion_elements(&mut self, eccentricity: f64, pericentre_omega: f64, star_mass: f64) {
         self.eccentricity = eccentricity;
         self.pericentre_omega = pericentre_omega;
+        self.reduced_mass = (star_mass * self.mass) / (star_mass + self.mass);
     }
 
     // Calculates the density_ratio (planet / star).

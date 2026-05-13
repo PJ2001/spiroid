@@ -1,0 +1,137 @@
+{
+  "time": 3.15891576e+16,
+  "disk_lifetime": 78332610638970.4,
+  "disk_is_dissipated": true,
+  "derivatives": {
+    "central_body": {
+      "radiative_zone_angular_momentum": 0.0,
+      "convective_zone_angular_momentum": 0.0
+    },
+    "orbiting_body": {
+      "semi_major_axis": 0.0,
+      "spin": 0.0,
+      "eccentricity": 0.0,
+      "inclination": 0.0,
+      "longitude_ascending_node": 0.0,
+      "pericentre_omega": 0.0,
+      "spin_inclination": 0.0
+    },
+    "perturbing_body": {
+      "eccentricity": 0.0,
+      "pericentre_omega": 0.0
+    }
+  },
+  "central_body": {
+    "kind": {
+      "Star": {
+        "mass": 1.5906504890623634e+30,
+        "spin": 0.00004986541833588723,
+        "core_envelope_coupling_constant": 120589526624728.98,
+        "evolution": {
+          "Starevol": {
+            "star_file_path": "examples/data/star/evolution/savgol_08.csv"
+          }
+        },
+        "age": 3.15891576e+16,
+        "radius": 506858744.21051073,
+        "convective_radius": 354025348.74553007,
+        "radiative_mass": 1.4969934285124866e+30,
+        "convective_moment_of_inertia_derivative": 4.104460116508303e+27,
+        "convective_moment_of_inertia": 1.000711450994429e+46,
+        "radiative_moment_of_inertia": 3.576622114140349e+46,
+        "radiative_mass_derivative": 9718710867.41467,
+        "luminosity": 9.866388361015464e+25,
+        "dynamical_tide_dissipation": 2687.6896984661125,
+        "convective_turnover_time": 4081159.3707432444,
+        "convective_turnover_time_sun": 2126270.90231897,
+        "angular_momentum_redistribution": 1.578008546345747e+40,
+        "mass_transfer_envelope_to_core_torque": 4.049352538820689e+22,
+        "rossby": 0.03087428061190746,
+        "mass_loss_rate": 90762526423.65099,
+        "magnetic_field": 0.0,
+        "wind_torque": -7.135022409654127e+26,
+        "alfven_radius": 12555807516.222088,
+        "tidal_quality": 0.0,
+        "tidal_frequency": 0.00009915191205786033,
+        "magnetic_torque": 0.0,
+        "tidal_torque_convective": -332854560837.477,
+        "evolved_wind_torque": -0.0,
+        "evolved_change_semi_major_axis": 0.0,
+        "evolved_mass_loss_rate": 0.0,
+        "terminal_wind_speed": 228831.66760406224,
+        "mass_accretion_efficiency": 2.3986800726504083e-15,
+        "wind_orbital_angular_momentum_loss": 9.367814660938548e-12,
+        "convective_zone_angular_momentum": 4.990089513734992e+41,
+        "radiative_zone_angular_momentum": 1.855676942283096e+42
+      }
+    },
+    "tides": {
+      "ConstantTimeLag": {
+        "equilibrium": {
+          "SigmaBarStar": 1e-6
+        },
+        "inertial": "FrequencyAveraged"
+      }
+    },
+    "magnetism": {
+      "Wind": {
+        "footpoint_conductance": 58000.0,
+        "speed_of_sound": 0.0,
+        "critical_radius": 0.0,
+        "critical_radius_div_alfven_radius": 0.0,
+        "magnetic_torque": 0.0,
+        "radial_magnetic_field": 0.0,
+        "magnetic_pressure": 0.0,
+        "integration_constant": 0.0,
+        "wind_velocity": 0.0,
+        "surface_wind_velocity": 0.0,
+        "wind_density": 0.0,
+        "alfvenic_mach": 0.0,
+        "azimuthal_velocity": 0.0,
+        "alfven_speed_at_alfven_radius": 0.0,
+        "interaction": "None"
+      }
+    },
+    "wind": "Enabled"
+  },
+  "orbiting_body": {
+    "kind": {
+      "Planet": {
+        "mass": 4.8685e+24,
+        "radius": 6052000.0,
+        "semi_major_axis": 108209525402.2157,
+        "magnetic_field": 10.0,
+        "spin": 8.073984423844741e-7,
+        "eccentricity": 0.00500000000011215,
+        "inclination": 0.3495999235632796,
+        "longitude_ascending_node": 1.0302720218046513,
+        "pericentre_omega": -0.07395182155406455,
+        "spin_inclination": 0.3278438030264058,
+        "radius_of_gyration_2": 0.33070368308499226,
+        "luminosity": 0.0,
+        "atmosphere": "Disabled",
+        "magnetic_pressure": 0.3978873577297383,
+        "mean_motion": 2.8946230695706554e-7,
+        "roche_limit": 1008728167.9425441,
+        "orbit_lower_limit": 1008728167.9425441,
+        "density_ratio": 1.7979784523582125,
+        "reduced_mass": 4.868485099039752e+24,
+        "moment_of_inertia": 5.89701245128827e+37,
+        "is_destroyed": false
+      }
+    },
+    "tides": {
+      "KaulaTides": {
+        "particle_type": {
+          "Solid": {
+            "solid_file": "examples/data/planet/tides/kaula/leconte2015_steinberger.json"
+          }
+        },
+        "atmosphere_model": "Disabled"
+      }
+    },
+    "magnetism": "Disabled",
+    "wind": "Enabled"
+  },
+  "perturbing_body": null
+}

@@ -317,6 +317,7 @@ impl Universe {
         self.central_body.initialise(time)?;
         self.orbiting_body.initialise(time)?;
         let ParticleType::Star(star) = &self.central_body.kind else { unreachable!() };
+        // This is for the calculation and initialisation of the mean motion from semi-major axis.
         let star_mass = star.mass;
         if let Some(perturbing_body) = &mut self.perturbing_body {
             perturbing_body.initialise(time)?;
@@ -445,13 +446,18 @@ impl Universe {
         }
 
         if let Some(perturbing_body) = &mut self.perturbing_body {
+            planet.eccentricity = sqrt!(new_state.orbiting_body.eccentricity);
+            planet.pericentre_omega = new_state.orbiting_body.pericentre_omega;
+
             let ParticleType::Planet(perturber) = &mut perturbing_body.kind else {
                 todo!()
             };
             perturber.refresh_companion_elements(
                 new_state.perturbing_body.eccentricity,
                 new_state.perturbing_body.pericentre_omega,
+                star.mass,
             );
+          
         }
 
         Ok(())

@@ -29,6 +29,8 @@ import sys
 
 sys.dont_write_bytecode = True
 
+PHASE_PORTRAIT_ENABLED = True
+
 import glob
 import json
 from json import JSONDecodeError
@@ -51,6 +53,7 @@ from units import (
     convert_units,
     get_units_label,
     filter_keys,
+    compute_angular_momentum,
 )
 
 
@@ -95,6 +98,7 @@ def parse_jsonl(data):
                 dict[key].append(value)
             else:
                 dict[key] = [value]
+    compute_angular_momentum(dict)
     return dict
 
 
@@ -235,6 +239,12 @@ def main():
             print(f"Making graph: {y_label}")
             subplots = create_merged_subplots(x_label, y_label, all_data)
             create_plots(x_label, y_label, subplots, output_path)
+
+        if PHASE_PORTRAIT_ENABLED:
+            phase_subplots = create_merged_subplots("eta_degrees", "planet_eccentricity", all_data)
+            if phase_subplots:
+                print("Making phase portrait: planet_eccentricity vs eta_degrees")
+                create_plots("eta_degrees", "planet_eccentricity", phase_subplots, output_path)
     else:
         # Create a plot for each quantity for each data file.
         for path, data in all_data.items():
@@ -244,13 +254,16 @@ def main():
             print(f"processing file: {output_path}")
             # Remove unwanted keys (keys specified as unworth for plotting).
             all_keys = filter_keys(all_keys)
-            # Create a merged plot for all grouped quantities for each data file.
-            for y_label, key_set in partition_keys(all_keys).items():
-                if len(key_set) == 1:
-                    continue
+            for y_label in all_keys:
                 print(f"Making graph: {y_label}")
-                subplots = create_subplots(x_label, key_set, data)
+                subplots = create_subplots(x_label, [y_label], data)
                 create_plots(x_label, y_label, subplots, output_path)
+
+            if PHASE_PORTRAIT_ENABLED:
+                if "eta_degrees" in data and "planet_eccentricity" in data:
+                    print("Making phase portrait: planet_eccentricity vs eta_degrees")
+                    phase_subplots = create_subplots("eta_degrees", ["planet_eccentricity"], data)
+                    create_plots("eta_degrees", "planet_eccentricity", phase_subplots, output_path)
 
 
 if __name__ == "__main__":

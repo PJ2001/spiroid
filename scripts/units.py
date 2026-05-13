@@ -1,3 +1,5 @@
+import math
+
 AU = 149597870700.0
 SECONDS_IN_YEAR = 31557600.0
 SOLAR_MASS = 1.9884158605722266e30
@@ -26,17 +28,19 @@ IGNORED_KEYS = [
     "planet_magnetic_pressure",
     "planet_magnetism",
     "planet_mass",
-    "planet_mean_motion",
+    #"planet_mean_motion",
     "planet_moment_of_inertia",
     "planet_orbit_lower_limit",
-    #"planet_pericentre_omega",
+    "planet_pericentre_omega",
     "planet_radius",
     "planet_radius_of_gyration_2",
-    "planet_reduced_mass",
+    #"planet_reduced_mass",
     "planet_roche_limit",
     #"planet_semi_major_axis",
     "planet_spin",
     "planet_spin_inclination",
+    "planet_atmosphere",
+    "planet_tides",
     "planet_wind",
     "star_age",
     "star_alfven_radius",
@@ -73,7 +77,7 @@ IGNORED_KEYS = [
     "star_magnetism_wind_surface_wind_velocity",
     "star_magnetism_wind_wind_density",
     "star_magnetism_wind_wind_velocity",
-    "star_mass",
+    #"star_mass",
     "star_mass_accretion_efficiency",
     "star_mass_loss_rate",
     "star_mass_transfer_envelope_to_core_torque",
@@ -96,7 +100,7 @@ IGNORED_KEYS = [
     "perturber_magnetism",
     "perturber_planet_atmosphere",
     "perturber_planet_density_ratio",
-    #"perturber_planet_eccentricity",
+    "perturber_planet_eccentricity",
     "perturber_planet_inclination",
     "perturber_planet_is_destroyed",
     "perturber_planet_longitude_ascending_node",
@@ -104,26 +108,45 @@ IGNORED_KEYS = [
     "perturber_planet_magnetic_field",
     "perturber_planet_magnetic_pressure",
     "perturber_planet_mass",
-    #"perturber_planet_mean_motion",
+    "perturber_planet_mean_motion",
     "perturber_planet_moment_of_inertia",
     "perturber_planet_orbit_lower_limit",
-    #"perturber_planet_pericentre_omega",
+    "perturber_planet_pericentre_omega",
     "perturber_planet_radius",
     "perturber_planet_radius_of_gyration_2",
     "perturber_planet_reduced_mass",
     "perturber_planet_roche_limit",
-    #"perturber_planet_semi_major_axis",
+    "perturber_planet_semi_major_axis",
     "perturber_planet_spin",
     "perturber_planet_spin_inclination",
     "perturber_tides",
     "perturber_wind",
+    "star_evolution_starevol_star_file_path",
+    "star_magnetism",
+    "star_terminal_wind_speed",
+    "derivatives_central_body_radiative_zone_angular_momentum",
+    "derivatives_central_body_convective_zone_angular_momentum",
+    "derivatives_orbiting_body_spin",
+    "derivatives_orbiting_body_eccentricity",
+    "derivatives_orbiting_body_inclination",
+    "derivatives_orbiting_body_longitude_ascending_node",
+    "derivatives_orbiting_body_pericentre_omega",
+    "derivatives_orbiting_body_semi_major_axis",
+    "derivatives_orbiting_body_spin_inclination",
     "derivatives_perturbing_body_eccentricity",
     "derivatives_perturbing_body_pericentre_omega",
+    "angular_momentum_planet",
+    "angular_momentum_perturber",
+    "angular_momentum_star",
+    "angular_momentum_total",
+    "angular_momentum_drift",
+    "angular_momentum_drift_smoothed",
+    "angular_momentum_orbital",
 ]
 
 
 def filter_keys(keys):
-    """Remove INGORED_KEYS from the provided list of keys."""
+    """Remove IGNORED_KEYS from the provided list of keys."""
     for key in IGNORED_KEYS:
         if key in keys:
             keys.remove(key)
@@ -159,6 +182,30 @@ UNITS = {
     },
     "planet_spin_inclination": {
         "label": "rad",
+    },
+    "angular_momentum_planet": {
+        "label": "kg.m^2.s-1",
+    },
+    "angular_momentum_perturber": {
+        "label": "kg.m^2.s-1",
+    },
+    "angular_momentum_star": {
+        "label": "kg.m^2.s-1",
+    },
+    "angular_momentum_total": {
+        "label": "kg.m^2.s-1",
+    },
+    "angular_momentum_drift": {
+        "label": "ΔL/L₀",
+    },
+    "angular_momentum_drift_smoothed": {
+        "label": "ΔL/L₀ (smoothed)",
+    },
+    "angular_momentum_orbital": {
+        "label": "kg.m^2.s-1",
+    },
+    "eta_degrees": {
+        "label": "deg",
     },
 }
 
@@ -202,6 +249,86 @@ def sanitise_key(key):
             key = key.replace(prefix, KEY_PREFIXES.get(prefix)).lower()
             break
     return key
+
+
+def compute_angular_momentum(data):
+    #Compute orbital angular momenta from orbital elements already in the data dict.
+
+    #planet_semi_major_axis has been converted to AU by convert_units
+
+    # mean motion and reduced mass are hard coded to be constant in these calculations
+
+    planet_keys = ["star_mass", "planet_mass", "planet_semi_major_axis", "planet_eccentricity"]
+    if all(k in data for k in planet_keys):
+        m_star_0 = data["star_mass"][0] * SOLAR_MASS
+        m_planet_0 = data["planet_mass"][0]
+        a_planet_0 = data["planet_semi_major_axis"][0] * AU
+        planet_reduced_mass_0 = (m_star_0 * m_planet_0) / (m_star_0 + m_planet_0)
+        planet_mean_motion_0 = math.sqrt(GRAVITATIONAL * (m_star_0 + m_planet_0) / a_planet_0 ** 3)
+        data["angular_momentum_planet"] = [
+            planet_reduced_mass_0 * (semi_major_axis * AU) ** 2 * planet_mean_motion_0 * math.sqrt(1.0 - eccentricity ** 2)
+            for semi_major_axis, eccentricity in zip(data["planet_semi_major_axis"], data["planet_eccentricity"])
+        ]
+
+    perturber_keys = ["star_mass", "perturber_planet_mass", "perturber_planet_semi_major_axis", "perturber_planet_eccentricity"]
+    if all(k in data for k in perturber_keys):
+        m_star_0 = data["star_mass"][0] * SOLAR_MASS
+        m_perturber_0 = data["perturber_planet_mass"][0]
+        a_perturber_0 = data["perturber_planet_semi_major_axis"][0]
+        perturber_reduced_mass_0 = (m_star_0 * m_perturber_0) / (m_star_0 + m_perturber_0)
+        perturber_mean_motion_0 = math.sqrt(GRAVITATIONAL * (m_star_0 + m_perturber_0) / a_perturber_0 ** 3)
+        data["angular_momentum_perturber"] = [
+            perturber_reduced_mass_0 * semi_major_axis ** 2 * perturber_mean_motion_0 * math.sqrt(1.0 - eccentricity ** 2)
+            for semi_major_axis, eccentricity in zip(data["perturber_planet_semi_major_axis"], data["perturber_planet_eccentricity"])
+        ]
+
+    star_keys = ["star_convective_zone_angular_momentum", "star_radiative_zone_angular_momentum"]
+    if all(k in data for k in star_keys):
+        data["angular_momentum_star"] = [
+            convective + radiative
+            for convective, radiative in zip(data["star_convective_zone_angular_momentum"], data["star_radiative_zone_angular_momentum"])
+        ]
+
+    if "angular_momentum_planet" in data and "angular_momentum_perturber" in data:
+        data["angular_momentum_orbital"] = [
+            planet + perturber
+            for planet, perturber in zip(data["angular_momentum_planet"], data["angular_momentum_perturber"])
+        ]
+
+    present = [k for k in ["angular_momentum_planet", "angular_momentum_perturber", "angular_momentum_star"] if k in data]
+    if len(present) > 1:
+        data["angular_momentum_total"] = [
+            sum(values) for values in zip(*(data[k] for k in present))
+        ]
+
+    if "angular_momentum_total" in data:
+        initial_angular_momentum = data["angular_momentum_total"][0]
+        data["angular_momentum_drift"] = [
+            (angular_momentum - initial_angular_momentum) / initial_angular_momentum
+            for angular_momentum in data["angular_momentum_total"]
+        ]
+
+
+        OSCILLATION_PEAKS = 24
+        drift = data["angular_momentum_drift"]
+        half = max(1, len(drift) // OSCILLATION_PEAKS // 2)
+        data["angular_momentum_drift_smoothed"] = [
+            max(drift[max(0, i - half) : min(len(drift), i + half + 1)])
+            for i in range(len(drift))
+        ]
+
+    compute_eta(data)
+    return data
+
+
+def compute_eta(data):
+    """Compute eta = varpi_p - varpi_c (in degrees), the apsidal angle from Mardling (2007)."""
+    keys = ("planet_pericentre_omega", "perturber_planet_pericentre_omega")
+    if all(k in data for k in keys):
+        data["eta_degrees"] = [
+            math.degrees(vp - vc)
+            for vp, vc in zip(data[keys[0]], data[keys[1]])
+        ]
 
 
 def partition_keys(keys):
